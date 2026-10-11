@@ -1,0 +1,7 @@
+import {readFile,writeFile} from 'node:fs/promises';import {chromium} from '/Users/sunny/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
+const b=await chromium.launch({channel:'chrome',headless:true}),p=await b.newPage();await p.goto('http://localhost:4318/');
+for(const name of ['AcousticGuitarSample-0','AcousticGuitarSample-15','Blue-0','Piano-0']){
+ const variant=process.argv[2]||'evidence-v1',data=await readFile(new URL(`results/${variant}-${name}.ndjson`,import.meta.url),'utf8');const notes=data.trim().split('\n').map(JSON.parse).filter(x=>x.type==='note').map(x=>x.event);const input=[...await readFile(new URL(`samples/${name}.wav`,import.meta.url))];
+ const result=await p.evaluate(async({notes,input})=>{const {Band}=await import('/audio.mjs');const {wavDataUrl}=await import('/recording.mjs');const ctx=new OfflineAudioContext(2,48000*11,48000);const band=new Band(ctx);for(const n of notes)band.play(n,.1+n.beat*.6,100);const out=await ctx.startRendering();const channels=[out.getChannelData(0),out.getChannelData(1)];let peak=0;for(const x of channels[0])peak=Math.max(peak,Math.abs(x));return {audio:wavDataUrl({channels,sampleRate:48000}),peak};},{notes,input});
+ await writeFile(new URL(`results/${variant}-${name}-band.wav`,import.meta.url),Buffer.from(result.audio.split(',')[1],'base64'));console.log(name,result.peak);
+}await b.close();
