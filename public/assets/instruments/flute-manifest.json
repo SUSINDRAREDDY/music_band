@@ -1,0 +1,47 @@
+{
+ "slug": "flute",
+ "triangles": 9292,
+ "texture_px": 2048,
+ "triangles_light": null,
+ "texture_px_light": null,
+ "files": {
+  "glb": {
+   "name": "flute.glb",
+   "bytes": 658036
+  },
+  "blend": {
+   "name": "flute.blend",
+   "bytes": 604968
+  },
+  "fbx": {
+   "name": "flute.fbx",
+   "bytes": 1237308
+  },
+  "obj": {
+   "name": "flute-obj.zip",
+   "bytes": 584676
+  },
+  "usdz": {
+   "name": "flute.usdz",
+   "bytes": 1074958
+  }
+ },
+ "extras": {
+  "license": "CC0-1.0",
+  "source": "grab3d.com",
+  "dimensions_m": "0.669 x 0.033 x 0.034",
+  "triangles": 9292,
+  "textures": "PBR 2048px: base color, roughness, metallic, normal (baked)",
+  "generator": "Created by grab3d",
+  "created": "2026-09-26",
+  "real_size": "concert flute in C, 67 cm long, 19 mm tube",
+  "notes": "silver Boehm flute: head joint with lip plate, dark oval embouchure hole and crown, body joint with a row of open-hole and closed key cups on arms from a side rod with posts, thumb keys at the back, trill levers, foot joint with three keys and roller levers; lies with the keys facing front-up; single object, no text",
+  "set": "Cozy Music Kit"
+ },
+ "origin": {
+  "method": "procedural",
+  "detail": "Built procedurally with Blender scripts. The scripts were written with the help of an AI coding assistant. No generative AI model produced the geometry or textures directly.",
+  "ai_content": false,
+  "ai_assisted_code": true
+ }
+}

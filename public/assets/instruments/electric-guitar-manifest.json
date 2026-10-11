@@ -1,0 +1,47 @@
+{
+ "slug": "electric-guitar",
+ "triangles": 11924,
+ "texture_px": 2048,
+ "triangles_light": null,
+ "texture_px_light": null,
+ "files": {
+  "glb": {
+   "name": "electric-guitar.glb",
+   "bytes": 1299256
+  },
+  "blend": {
+   "name": "electric-guitar.blend",
+   "bytes": 999517
+  },
+  "fbx": {
+   "name": "electric-guitar.fbx",
+   "bytes": 2257884
+  },
+  "obj": {
+   "name": "electric-guitar-obj.zip",
+   "bytes": 1233543
+  },
+  "usdz": {
+   "name": "electric-guitar.usdz",
+   "bytes": 2061703
+  }
+ },
+ "extras": {
+  "license": "CC0-1.0",
+  "source": "grab3d.com",
+  "dimensions_m": "0.456 x 0.454 x 0.979",
+  "triangles": 11924,
+  "textures": "PBR 2048px: base color, roughness, metallic, normal (baked)",
+  "generator": "Created by grab3d",
+  "created": "2026-09-26",
+  "set": "Cozy Music Kit",
+  "real_size": "solid-body electric guitar, 1.00 m long, body 46 x 33 x 4.4 cm, 648 mm scale, 22 frets",
+  "notes": "own neutral double-cutaway body (not a copy of a known model); 2 humbuckers, 3 knobs, 3-way switch, tremolo bridge with arm, 6 strings, 3+3 tuners; no text, no logo"
+ },
+ "origin": {
+  "method": "procedural",
+  "detail": "Built procedurally with Blender scripts. The scripts were written with the help of an AI coding assistant. No generative AI model produced the geometry or textures directly.",
+  "ai_content": false,
+  "ai_assisted_code": true
+ }
+}

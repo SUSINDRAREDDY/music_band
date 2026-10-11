@@ -1,0 +1,47 @@
+{
+ "slug": "violin",
+ "triangles": 11852,
+ "texture_px": 2048,
+ "triangles_light": null,
+ "texture_px_light": null,
+ "files": {
+  "glb": {
+   "name": "violin.glb",
+   "bytes": 1169360
+  },
+  "blend": {
+   "name": "violin.blend",
+   "bytes": 928730
+  },
+  "fbx": {
+   "name": "violin.fbx",
+   "bytes": 1970828
+  },
+  "obj": {
+   "name": "violin-obj.zip",
+   "bytes": 956785
+  },
+  "usdz": {
+   "name": "violin.usdz",
+   "bytes": 1770483
+  }
+ },
+ "extras": {
+  "license": "CC0-1.0",
+  "source": "grab3d.com",
+  "dimensions_m": "0.750 x 0.288 x 0.103",
+  "triangles": 11852,
+  "textures": "PBR 2048px: base color, roughness, metallic, normal (baked)",
+  "generator": "Created by grab3d",
+  "created": "2026-09-26",
+  "set": "Cozy Music Kit",
+  "real_size": "full-size (4/4) violin, 59 cm long, body 35.6 cm, lower bout 20.8 cm, with 75 cm bow",
+  "notes": "violin lies on its back, slightly tilted so that back and scroll rest on the ground; arched top and back, purfling, f-holes as dark inlays, spruce-coloured bridge, ebony fingerboard, pegs (G/D left, A/E right), tailpiece with E fine tuner, chinrest on the bass side, 4 strings; the bow is the separate object violin_bow lying on its side in front; no text, no logo"
+ },
+ "origin": {
+  "method": "procedural",
+  "detail": "Built procedurally with Blender scripts. The scripts were written with the help of an AI coding assistant. No generative AI model produced the geometry or textures directly.",
+  "ai_content": false,
+  "ai_assisted_code": true
+ }
+}

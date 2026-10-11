@@ -1,78 +1,122 @@
-# Find the Beat — music prototype
+# Find the Beat
 
-Local-only experiment. The existing AI Hunger Games application is untouched.
+
+
+Live accompaniment composed as ABC notation, with sheet music rendered while the model writes.
+
+
 
 ## Run
 
-From this directory, run `npm start`, then open http://localhost:4318 in Chrome.
-Requires Node 20+ and a signed-in `codex` CLI (`codex login status`). Set CODEX_PATH if the executable is not on PATH. No API key is used. The model is explicitly `gpt-6.1-sol`, reasoning `low`. This uses your Codex account usage allowance.
-
-Use headphones. Select microphone/audio interface, a browser tab with its audio-sharing checkbox enabled, or an incoming recording. Recordings are played in real time; the model never receives future audio. For files, choose a file then press Start listening. Microphone uses the browser's chosen input device. No audio is written to disk or sent to Codex; only estimated musical state is sent. Stop cancels pending generation and releases the notes.
-
-## Implementation
-
-Browser Web Audio analyser (8192-sample FFT) → peak-weighted pitch-class chroma, major/minor triad ranking, attack interval tempo estimate → rolling five seconds of musical context → local Node bridge → persistent Codex app-server over stdio → incremental compact note rows → validated events → local Web Audio instrument synthesis.
-
-A new ephemeral model thread has minimal music-only instructions for each phrase. Shell, apps, plugins, hooks, multi-agent and configured MCP servers are disabled. Server is loopback-only, validates Origin/Host and musical context, and allows one composition at a time. Credentials remain in Codex's own authentication storage. The current app-server protocol is experimental.
-
-Each row is `[beat, instrument, MIDI_or_chord_array, durationBeats, velocity, optionalRepeatCount, optionalRepeatEveryBeats]`. The model chooses all notes and repetition patterns; the parser expands up to 256 events per phrase. Ten instrument voices are available. Notes are generated, not selected from stored songs or loops. Local sound generation uses synthesized bass, electric-piano-like tones and drum hits. No prerecorded backing track or fallback progression exists.
-
-Playback accepts streamed model events but commits each completed response as one fresh phrase. It schedules that phrase after the current phrase ends, using the request's captured tempo so later tempo estimates cannot distort durations. It requests an update at most every five seconds while input is active, with one request in flight and no stale request backlog. Generation continues while the current phrase plays. Recent played notes plus the current queue's ending are supplied as continuation context. Chord/tempo changes and input pauses do not cancel generation. Only Stop, a new session, or seeking in a recording invalidates playback. Silence stops new requests; an already requested phrase can finish. No backing track or repeated fallback is inserted if the model falls behind.
-
-## What has and has not been proven
-
-- Unit tests cover 24 clean major/minor chroma templates, a spectral Em fixture, basic consistent tempo, malformed/partial notes and input validation.
-- Real authenticated GPT-6.1 Sol / low runs returned fresh valid notes.
-- Initial exec path: first notes 11.638 s, complete 12.167 s.
-- Persistent verbose stream: first note 3.643 s, complete 7.838 s.
-- Persistent compact stream: first note 2.884 s, complete 5.330 s.
-- These are individual observations, not latency percentiles or guarantees. First audible playback requires additional grouping and scheduling delay. Initial listening adds approximately five seconds.
-- Browser integration test streamed a synthetic Em → Am → silence recording through the real Codex backend: both harmony estimates were observed, fresh notes were scheduled, and silence cancelled playback. The initial one-beat buffering test dropped five late notes in one phrase; buffering was increased to two beats. The subsequent browser run scheduled all 12 notes in its first phrase with no late-note log; Stop cancelled the next request and the backend reported busy=false. Offline audio rendering produced finite, nonzero samples (peak 0.0435 for the tested bass note). Browser runtime errors: none; mobile horizontal overflow: none.
-- Clean synthetic audio is not validation on a real polyphonic guitar. Harmonics, open strings, inversions, room noise, swing, rubato, and ambiguous half/double tempo can defeat this basic estimator. It is not a trained guitar transcription system.
-- Audio scheduling is local; musical decisions still depend on network and model latency. This architecture does NOT currently deliver a seamless low-latency live band. It is a working experiment to expose and measure the limitation, with honest gaps instead of canned replacement music.
-- Instrument sounds are basic synthesis, not professional sample libraries. No 3D character work was started.
-
-## Tests
-
-`npm test`
-
-Export log in the UI saves analysis transitions and response timings, not microphone audio. Browser audio permissions and live instrument quality must be verified on the actual demonstration setup.
-
-## References
-
-- https://developers.openai.com/codex/app-server
-- https://developers.openai.com/codex/noninteractive
-- https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API
-
-## Longer listening trial
-
-Responses request eight bars in 4/4 (32 beats, 19.2 seconds at 100 BPM), using compact chord and rhythm rows. The full previous phrase and recent input attack times are carried forward. Playback keeps the initial band tempo stable and joins phrases on bar boundaries; note releases may cross those boundaries. This buffer trades immediate reaction for continuity. The composer timeout is 45 seconds to accommodate the longer output. Streaming, cancellation, and late-note rejection remain enabled. This does not guarantee gapless playback.
-
-## Current listening behavior
-
-Refresh the page after updates. The initial five-second listening period is followed by generation of a complete ten-second phrase. This is a deliberate initial wait to avoid dropping notes during token streaming. Audio is newly composed after receiving live musical analysis; no song or progression is hardcoded. Continuity depends on completing subsequent phrases before the queue runs out, and is not guaranteed.
-
-## Expanded ensemble
-
-The composer may choose any subset of ten synthesized instruments: bass, electric keys, drums, piano, plucked strings, string pad, organ, vibraphone, flute, and synth lead. The model chooses instrumentation, notes and arrangement; the synthesizer defines only timbres and envelopes. Instructions ask for motif development, changing voicings, dynamics and varied rhythm informed by recent band output. This encourages variation but is not a musical-quality guarantee. All ten voices passed finite/nonzero offline audio-render checks; the ten-channel mixer has no browser runtime errors or mobile horizontal overflow in the check. These are synthesis approximations, not sampled acoustic instruments.
-
-## Audio diagnostics
-
-Test speaker plays one explicitly labeled reference tone independently of Codex (never used as accompaniment). Input analysis now connects through a zero-gain sink to the destination to keep the microphone graph active without feedback. Input threshold is 0.003 RMS; master gain is 1.2 before compression. Live diagnostics show AudioContext state, input RMS, band output peak, and recent played-note count. The scheduler tolerates up to 200 ms of timer lateness rather than silently dropping every late callback. Physical device audibility still requires the user's speaker test.
-
-## Codex authentication recovery
-
-Codex owns managed ChatGPT authentication (official reference: https://developers.openai.com/codex/app-server#auth-endpoints). Before generation the bridge checks account/read without forcing refresh. It checks auth.json file metadata only, never token contents; a changed stamp restarts the local composer process to reload current credentials. Authentication failure before any delivered notes triggers one clean process restart and retry. Persistent failure requires signing in again; non-auth failures and partially delivered responses are not retried. Four regression tests cover these behaviors. Metadata-based detection applies to file-backed credentials; keychain changes are handled by the bounded error recovery. This fixes the observed stale-process behavior, not revoked account credentials.
 
 
-## Original input and responsive tempo
-The browser captures a rolling five-second AudioWorklet buffer and sends an IEEE float WAV audio attachment to Codex alongside musical estimates. Sample values and channels are preserved at the browser AudioContext sample rate; browser/device decoding or resampling can already have occurred. No pitch shifting, quantization, transcription replacement, or AI backing mix is applied to this capture. The buffer is kept in memory. Use headphones to prevent acoustic feedback entering the microphone.
-Tempo now follows measured attacks instead of locking to the first response. A separate short analysis window tracks attacks; sustained estimates retime future unscheduled accompaniment. Already sounding notes are not time-stretched. Fast pulses up to 200 BPM are not folded at 170 BPM. Beat-vs-subdivision ambiguity remains possible; tempo assist overrides the estimate. Reliable chord changes suppress stale pitched events and a matching fresh response replaces future stale accompaniment. This avoids clashes but can temporarily leave percussion alone while composing.
+`npm install`, then `npm start`. Open http://localhost:4318. Requires Node 20+ and a signed-in Codex CLI. Set CODEX_PATH if needed. Generation uses GPT-6.1 Sol with low reasoning and your Codex account allowance.
 
-## Responsive player and persisted diagnostics
-New compositions cover four bars and replace future queued events at the next bar boundary. While a request is pending, the player can reuse the final bar of the current AI-generated phrase at most twice; there are no stored musical patterns. Silence prevents these bridges. Tempo updates require a stable majority over at least 2.5 seconds and move by at most 3 BPM per accepted observation. Manual tempo remains immediate. Uncertain chord labels no longer suppress all pitched playback.
-Each request is saved in `diagnostics/<request-id>/`: `input.wav` (original submitted bytes), `request.json` (analysis, audio hash and timestamp), and `events.ndjson` (model events, scheduling, played/skipped events, tempo changes and bridges). Playback events include the originating composition ID. The UI reports each saved ID. Recordings remain local and are gitignored; requests still send audio to Codex as before. The saved clips are the windows actually submitted, not a continuous session recording. Diagnostics are retained until manually deleted.
 
-## Audio modality correction and measured evidence
-Direct listening tests on four web excerpts all reported audio unavailable. The installed GPT-6.1 Sol metadata lists text/image inputs. Earlier successful audio-attached responses were NOT proof of audio understanding. The composer now receives instrument-independent measured spectral frames and onset timings, computed in a Web Worker. The original WAV is preserved locally unchanged and is no longer represented as audible to the model. Spectral peaks may contain harmonics; this is not reliable polyphonic transcription or a substitute for an audio-native composer.
-The full evidence is retained locally in request diagnostics; context.mjs compacts it for inference. No sample names, known keys, fixture melodies or instrument-specific templates enter the live prompt. Evaluation sources and licenses are in evaluation/samples/SOURCES.md. Local trial outputs are kept in evaluation/results and are not included in this repository. A failed quota-limited trial is not a zero-latency success. Generated WAVs are accompaniment-only renderings, not listening-quality certification.
+
+Select instruments and an input (microphone, shared tab audio, or recording), then Start listening. Use headphones. Test speaker checks output independently. Stop cancels generation and playback.
+
+
+
+## Current pipeline
+
+
+
+A rolling five-second input window supplies measured spectral and onset evidence to the composer. The model cannot hear audio directly. Original WAV windows remain in local diagnostics; only compact measured evidence is sent to the model.
+
+
+
+Each Start-to-Stop listening flow prewarms one ephemeral Codex thread, using GPT-6.1 Sol, low reasoning and the requested Fast tier. Every phrase is a new turn on that same thread. Stop interrupts generation and releases the thread; a new Start creates a fresh thread. Instrument changes remain in the same thread and the latest selection overrides previous turns. Authentication recovery may require replacing a disconnected thread.
+
+Each response has one ABC header (X:1, M:4/4, L:1/8, Q:1/4=BPM, K:key), then four one-bar ensemble blocks ending in `%endbar`. The server restores the shared header for each block, validates exact durations, assigns instrument programs and streams playable bars through NDJSON. No music scoring is performed. The prompt includes valid rhythm, chord, rest and accidental examples and excludes unsupported notation.
+
+The browser preloads selected instrument samples and appends each validated bar to the audio queue as it arrives. No fallback loops are generated; sustained generation slower than playback can still cause gaps. Samples load from the FluidR3_GM soundfont hosted by paulrosen.github.io.
+
+## Xiaomi research
+
+
+
+The [MiMo-V2.6-RL-oss dataset](https://huggingface.co/datasets/XiaomiMiMo/MiMo-V2.6-RL-oss) contains a music subset of composition briefs and metadata, not paired reference ABC answers. Rows contain prompt, data_source, ability, reward_model, and extra_info (including requested voice count, BPM, and meter). The first inspected brief requests 56 bars in E major at 129 BPM for violin, flute, and cello.
+
+
+
+The [dataset builder](https://github.com/XiaomiMiMo/verl/blob/mimo-oss/recipes/design/music/build_parquet.py) explicitly leaves ground truth empty. The [scorer pipeline](https://github.com/XiaomiMiMo/verl/blob/mimo-oss/recipes/design/music/scorer/pipeline.py) extracts ABC, compiles it using abc2midi, rejects compiler errors, ten or more bar warnings, internal blank lines, and conflicting channel programs, then scores MIDI features against a reference baseline. It does not evaluate brief compliance.
+
+
+
+This app adopts ABC output and the no-blank-lines rule. Its live four-bar format and abcjs validation are application constraints; it does not run Xiaomi's RL scorer or claim equivalent validation or music quality.
+
+
+
+## Validation and diagnostics
+
+
+
+`npm test` checks ABC parsing, streaming preview boundaries, authentication recovery, evidence extraction, tempo handling, and diagnostics. Input estimates are experimental, especially on polyphonic or ambiguous material.
+
+
+
+Each request is saved under diagnostics/<request-id>/ with input.wav, request.json and events.ndjson. These local files persist until manually deleted. Evaluation scripts and source attribution remain in evaluation/; historical trial claims are not current validation.
+
+
+
+## Continuous bar playback
+
+
+
+The composer now emits four standalone one-bar ABC tunes per request. Each tune contains the complete ensemble for that bar and ends with `%endbar`. The server validates each voice's duration and emits a `bar` event as soon as its delimiter arrives. This is notation validation only, not music scoring. All-rest bars retain their four-beat duration. Cross-bar ties are excluded from this transport.
+
+
+
+The browser prepares samples and appends bars at the queued audio end. Selected instrument samples (MIDI 36–84, plus common drum hits) preload with six background requests at a time during listening; other notes load on demand. First generation starts after two seconds of input. Subsequent requests begin when queued duration falls below the measured previous request time plus four seconds. Bar diagnostics record sample wait, request-to-schedule time, anchor, and underrun gap. Network or model stalls can still cause gaps. Earlier full-response playback descriptions above are superseded by this section.
+
+
+
+## Google AI Studio provider
+
+
+
+The server loads gitignored `.env.local` (Node 20.12+). Set MUSIC_PROVIDER=gemini and GEMINI_API_KEY to an AI Studio key. Keys stay on the Node server and are sent only in the x-goog-api-key header to Google's generativelanguage.googleapis.com endpoint. The browser never receives the key. Remove MUSIC_PROVIDER or set it to codex to restore the previous provider; there is no automatic cross-provider fallback.
+
+
+
+Direct Google model ID: gemini-3.1-flash-lite-preview (OpenRouter labels the same model google/gemini-3.1-flash-lite-preview but requires a different key). Uses streamGenerateContent with SSE, minimal thinking, a concise instruction and shared ABC headers across four bar blocks. Preserves per-bar notation validation, cancellation, preloading and adaptive scheduling; adds first-token and first-bar timing. Raw audio is not sent to Google; compact measured musical context is.
+
+
+
+Documentation: https://ai.google.dev/gemini-api/docs/generate-content/gemini-3 and https://ai.google.dev/gemini-api/docs/openai .
+
+
+
+Live synthetic Em-context tests at 100 BPM for pluck/bass/drums, after clarifying the delimiter format: 3/3 complete valid responses; first playable bar 2.330 / 1.677 / 3.875 seconds; complete four bars 2.639 / 2.053 / 4.264 seconds (9.6 seconds of playback). Earlier prompt attempts failed formatting. These are small-sample API timings, not browser audio latency or music-quality scores. Real performance still depends on sample loading, network variance and musical validity.
+
+
+Session diagnostics include the reused thread ID and setup wait per request. Lifecycle tests cover reuse, Stop during setup, new sessions, and notation-error recovery within the same thread.
+
+## Simplified streaming flow
+
+Choose a session tempo (default 100 BPM) before Start. It stays fixed until Stop; queued notes are never automatically retimed. Only the worker spectral/onset evidence goes to GPT, without a competing browser chord estimate. GPT chooses the music; validated bars are played directly without fallback loops. Notation appends one bar at a time within each phrase.
+
+Recording diagnostics are off by default. Set `BEAT_DIAGNOSTICS=1` before starting the server to enable local WAV and event capture for debugging. Normal playback does not encode or upload WAV snapshots, or write request diagnostics. Older diagnostics are retained.
+
+Tempo is now automatic by default: GPT infers pace from measured onsets and recent spectral detail, writes it in ABC Q:1/4, and each streamed bar carries that tempo into playback. A manual BPM remains an optional session override. Previously queued bars keep their original timing. Selected instruments are an allowed palette, not mandatory voices. The four-bar transport still uses 4/4; arbitrary meters are not yet supported.
+
+## Recording lookahead
+
+Recording input is decoded locally and analysed before its matching source sections play. Each request describes the next four source sections with absolute recording timestamps, per-section onset/pitch evidence, provisional ABC dominant notes and chord confidence. YIN estimates periodic pitch for clear solo input; it does not separate voices in a full mix. Uncertain notes are marked as rests in the candidate ABC, and spectral/chord estimates remain explicitly uncertain.
+
+Each validated generated bar and its original audio section share one AudioContext start time. If the model is late, both wait together at the section boundary. This preserves their relative alignment but can interrupt recording playback. No prerecorded accompaniment or fallback patterns are substituted. At the end, playback stops; Stop cancels all scheduled source sections. Instrument selection changes stop recording mode so a new selection can start cleanly. If a pulse cannot be estimated, a manual tempo is required. Tempo and 4/4 section boundaries are estimates, not a full beat/downbeat transcription; rubato and dense mixes remain experimental.
+
+Tests cover isolated pitch detection, silence, lookahead context, shared audio anchors, late bars, end truncation and cancellation. Browser verification uses the original synthetic `evaluation/live-pace-test.wav`, not a claim of perceptually verified accompaniment quality.
+
+## Model-free note tracking
+
+Input analysis now tracks monophonic note events at 10 ms hops using YIN and energy attacks. Original samples are unchanged. Each event retains start/end seconds and confidence. ABC uses a 1/32-note grid, explicit accidentals, z for measured silence and x for unknown/unobserved spans. Raw event timing accompanies the ABC so rounding is visible, not hidden. No trained transcription model is used. This is intended for clear single-note input, not reliable chord/voice separation from full songs. Short ornaments, noisy attacks and legato boundaries remain approximate.
+
+## Continuous recording playback and phrase memory (current)
+
+Recording mode now prepares the full accompaniment before playback. It starts the original recording once, continuously, and schedules GPT notes against that same audio clock. This trades preparation time for uninterrupted playback; it does not eliminate live microphone inference latency. Notes and the original samples are not replaced with fallback patterns.
+
+Each session retains the last four delivered ABC bars, the first pitched motif and a delivered-bar position. The prompt asks for a related counter-melody, phrase development and an optional subset of allowed instruments. User musical direction is supplied separately on each turn. Recording-only `%hold instrument MIDI_PITCH` comments join explicitly continued boundary notes; ordinary repeated notes remain separate attacks. Sample length can still limit audible sustain.
+
+The reproducible browser test is `/one-minute-test` when the server starts with `BEAT_TEST=1`. Click Run test; it synthesizes an original 60-second solo input, runs six real GPT phrases in one session, prepares samples, plays the full source continuously and records the mix. The gated artifact endpoint writes only its three named test files into `evaluation/one-minute`. The trace includes exact model inputs, instructions, streamed ABC, parsed notes and errors. This controlled test supplies 96 BPM and starts on a downbeat; it does not establish robust downbeat detection or accuracy on polyphonic commercial recordings. No musical quality score is computed.

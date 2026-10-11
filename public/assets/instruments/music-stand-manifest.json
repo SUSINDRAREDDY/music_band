@@ -1,0 +1,47 @@
+{
+ "slug": "music-stand",
+ "triangles": 4376,
+ "texture_px": 2048,
+ "triangles_light": null,
+ "texture_px_light": null,
+ "files": {
+  "glb": {
+   "name": "music-stand.glb",
+   "bytes": 877288
+  },
+  "blend": {
+   "name": "music-stand.blend",
+   "bytes": 514723
+  },
+  "fbx": {
+   "name": "music-stand.fbx",
+   "bytes": 1427708
+  },
+  "obj": {
+   "name": "music-stand-obj.zip",
+   "bytes": 603160
+  },
+  "usdz": {
+   "name": "music-stand.usdz",
+   "bytes": 1350381
+  }
+ },
+ "extras": {
+  "license": "CC0-1.0",
+  "source": "grab3d.com",
+  "dimensions_m": "0.571 x 0.499 x 1.295",
+  "triangles": 4376,
+  "textures": "PBR 2048px: base color, roughness, metallic, normal (baked)",
+  "generator": "Created by grab3d",
+  "created": "2026-09-26",
+  "set": "Cozy Music Kit",
+  "real_size": "orchestra music stand, desk 50 x 33 cm, 1.28 m tall (height adjustable approx. 0.95-1.45 m)",
+  "notes": "tripod base with coral rubber feet, clamp ring with coral knob, solid desk tilted back 18 degrees with raised rim and ledge, open booklet with blank staff lines (no notes, no text). Movable: 'music-stand_desk' (inner tube, tilt joint, desk and sheets) has its origin on the clamp ring - slide along Z between -0.25 m and +0.18 m to change the height; no logo"
+ },
+ "origin": {
+  "method": "procedural",
+  "detail": "Built procedurally with Blender scripts. The scripts were written with the help of an AI coding assistant. No generative AI model produced the geometry or textures directly.",
+  "ai_content": false,
+  "ai_assisted_code": true
+ }
+}

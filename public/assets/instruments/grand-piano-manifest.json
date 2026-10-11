@@ -1,0 +1,55 @@
+{
+ "slug": "grand-piano",
+ "triangles": 29224,
+ "texture_px": 2048,
+ "triangles_light": 17678,
+ "texture_px_light": 1024,
+ "files": {
+  "glb": {
+   "name": "grand-piano.glb",
+   "bytes": 2779352
+  },
+  "blend": {
+   "name": "grand-piano.blend",
+   "bytes": 1672731
+  },
+  "fbx": {
+   "name": "grand-piano.fbx",
+   "bytes": 4215932
+  },
+  "obj": {
+   "name": "grand-piano-obj.zip",
+   "bytes": 1765136
+  },
+  "usdz": {
+   "name": "grand-piano.usdz",
+   "bytes": 4071392
+  },
+  "glb_light": {
+   "name": "grand-piano-light.glb",
+   "bytes": 1259524
+  },
+  "fbx_light": {
+   "name": "grand-piano-light.fbx",
+   "bytes": 2164956
+  }
+ },
+ "extras": {
+  "license": "CC0-1.0",
+  "source": "grab3d.com",
+  "dimensions_m": "1.512 x 2.387 x 1.813",
+  "triangles": 29224,
+  "textures": "PBR 2048px: base color, roughness, metallic, normal (baked)",
+  "generator": "Created by grab3d",
+  "created": "2026-09-26",
+  "set": "Cozy Music Kit",
+  "real_size": "baby grand piano, case 1.49 x 1.60 m, 1.77 m long with keyboard, rim height 0.98 m, keys at 0.72 m; bench 0.76 x 0.36 x 0.52 m",
+  "notes": "88 keys (52 white, 36 black, A0-C8); black lacquer with walnut inner rim, spruce soundboard, pastel-gold cast plate with struts, overstrung strings (wound bass in brass), bridges, dampers, tuning pins, music desk, three legs with brass casters, lyre with three pedals. Movable: 'grand-piano_lid' (origin on the hinge along the straight bass side; delivered open 32 degrees with the front flap folded back; rotate +32 degrees about the hinge axis (Blender local Y) to close), 'grand-piano_stick' (lid prop, origin at its foot on the rim), 'grand-piano_fallboard' (key cover, origin on its lower front edge; rotate +90 degrees about local X to close over the keys). Bench is a separate object. No text, no logo."
+ },
+ "origin": {
+  "method": "procedural",
+  "detail": "Built procedurally with Blender scripts. The scripts were written with the help of an AI coding assistant. No generative AI model produced the geometry or textures directly.",
+  "ai_content": false,
+  "ai_assisted_code": true
+ }
+}

@@ -36,45 +36,33 @@ export function estimateTempo(onsets){
  return good.length>=candidates.length*.65?Math.round(good.reduce((a,b)=>a+b)/good.length):null;
 }
 export function validNote(n){return n&&Object.values(instruments).includes(n.instrument)&&Number.isInteger(n.note)&&n.note>=24&&n.note<=96&&Number.isFinite(n.beat)&&n.beat>=0&&n.beat<34&&Number.isFinite(n.duration)&&n.duration>=.05&&n.duration<=4&&Number.isFinite(n.velocity)&&n.velocity>=.05&&n.velocity<=1&&(n.instrument!=='drums'||[36,38,42,46,49].includes(n.note));}
-// Parse complete top-level event rows, including nested chord arrays, while streaming.
-export function extractNotes(text){
- const notes=[];let depth=0,start=-1;
- for(let i=0;i<text.length;i++){
-  if(text[i]==='['){depth++;if(depth===2)start=i;}
-  if(text[i]===']'){
-   if(depth===2&&start>=0){
-    try{
-     const row=JSON.parse(text.slice(start,i+1));
-     const [beat,code,pitch,duration,velocity,count=1,every=0]=row;
-     const pitches=Array.isArray(pitch)?pitch:[pitch];
-     if(Number.isFinite(beat)&&row.length>=5&&row.length<=7&&pitches.length<=8&&Number.isInteger(count)&&count>=1&&count<=64&&Number.isFinite(every)&&every>=0&&(count===1||every>=.125)){
-      for(let r=0;r<count;r++)for(const note of pitches){
-       const n={beat:beat+r*every,instrument:instruments[code],note,duration,velocity};
-       if(validNote(n)&&n.beat<32&&notes.length<256)notes.push(n);
-      }
-     }
-    }catch{}
-    start=-1;
-   }
-   depth--;
-  }
- }
- if(notes.length)return notes;
- return [...text.matchAll(/\{[^{}]*\}/g)].flatMap(m=>{try{const n=JSON.parse(m[0]);return validNote(n)&&n.beat<32?[n]:[];}catch{return [];}}).slice(0,256);
-}
-export function phraseAnchor(now,end,bpm){
- if(!end)return now+.15;
- const bar=240/bpm;
- return end+Math.max(0,Math.ceil((now+.15-end)/bar))*bar;
-}
 export function validateContext(x){
+ if(x?.sessionId!==undefined&&(typeof x.sessionId!=='string'||!/^[a-f0-9-]{36}$/.test(x.sessionId)))throw Error('Invalid listening session');
  if(!x||!Number.isFinite(x.bpm)||x.bpm<45||x.bpm>200||!Array.isArray(x.history)||x.history.length>30)throw Error('Invalid musical context');
  const history=x.history.map(h=>{if(!h||typeof h.chord!=='string'||! /^(?:[A-G]#?m?|unknown)$/.test(h.chord)||!Number.isFinite(h.at)||!Number.isFinite(h.energy))throw Error('Invalid analysis frame');return {chord:h.chord,at:h.at,energy:Math.max(0,Math.min(1,h.energy)),...(Number.isFinite(h.confidence)?{confidence:Math.max(0,Math.min(1,h.confidence))}:{})};});
  if(x.audio!==undefined&&(typeof x.audio!=='string'||x.audio.length>11000000||!/^data:audio\/wav;base64,[A-Za-z0-9+/]+={0,2}$/.test(x.audio)))throw Error('Invalid original audio');
+ let upcoming;
+ if(x.upcoming!==undefined){
+  if(!Array.isArray(x.upcoming)||x.upcoming.length!==4)throw Error('Expected four upcoming bars');
+  upcoming=x.upcoming.map((bar,index)=>{
+   if(bar.index!==index||!Number.isFinite(bar.startSeconds)||bar.startSeconds<0||!bar.evidence)throw Error('Invalid upcoming bar');
+   return {index,startSeconds:bar.startSeconds,evidence:validateContext({bpm:x.bpm,history:[],evidence:bar.evidence}).evidence};
+  });
+ }
  let evidence;
  if(x.evidence){const e=x.evidence;if(!Array.isArray(e.frames)||e.frames.length>40||!Array.isArray(e.onsetTimes)||e.onsetTimes.length>60)throw Error('Invalid evidence');
- evidence={durationSeconds:Math.min(6,Math.max(0,Number(e.durationSeconds)||0)),pitchClassOrder:'C C# D D# E F F# G G# A A# B',onsetTimes:e.onsetTimes.filter(t=>Number.isFinite(t)&&t>=0&&t<=6),frames:e.frames.map(f=>{if(!Number.isFinite(f.seconds)||!Number.isFinite(f.rms)||!Array.isArray(f.pitchClasses)||f.pitchClasses.length!==12||!f.pitchClasses.every(v=>Number.isFinite(v)&&v>=0&&v<=1)||!Array.isArray(f.peaks)||f.peaks.length>5||!f.peaks.every(p=>Array.isArray(p)&&p.length===2&&Number.isInteger(p[0])&&p[0]>=24&&p[0]<=96&&Number.isFinite(p[1])&&p[1]>=0&&p[1]<=1))throw Error('Invalid spectral frame');return {seconds:f.seconds,rms:f.rms,pitchClasses:f.pitchClasses,peaks:f.peaks};})};}
- return {bpm:Math.round(x.bpm),history,...(x.instruments!==undefined?{instruments:selectedInstruments(x.instruments)}:{}),...(evidence?{evidence}:{}),...(x.audio?{audio:x.audio}:{}),
+ let transcription;
+ if(e.transcription){
+  const events=e.transcription.events;
+  if(!Array.isArray(events)||events.length>1200)throw Error('Invalid note events');
+  let end=0;
+  transcription={method:'YIN + 10ms energy attacks; monophonic estimates',events:events.map(n=>{
+   if(!['note','silence','unknown'].includes(n.kind)||!Number.isFinite(n.startSeconds)||!Number.isFinite(n.endSeconds)||n.startSeconds<end-.00001||n.endSeconds<=n.startSeconds||n.endSeconds>6||!Number.isFinite(n.confidence)||n.confidence<0||n.confidence>1||(n.kind==='note'&&(!Number.isInteger(n.note)||n.note<24||n.note>96)))throw Error('Invalid note event');
+   end=n.endSeconds;return {kind:n.kind,note:n.kind==='note'?n.note:null,startSeconds:n.startSeconds,endSeconds:n.endSeconds,confidence:n.confidence};
+  })};
+ }
+ evidence={...(transcription?{transcription}:{}),durationSeconds:Math.min(6,Math.max(0,Number(e.durationSeconds)||0)),pitchClassOrder:'C C# D D# E F F# G G# A A# B',onsetTimes:e.onsetTimes.filter(t=>Number.isFinite(t)&&t>=0&&t<=6),frames:e.frames.map(f=>{if(!Number.isFinite(f.seconds)||!Number.isFinite(f.rms)||!Array.isArray(f.pitchClasses)||f.pitchClasses.length!==12||!f.pitchClasses.every(v=>Number.isFinite(v)&&v>=0&&v<=1)||!Array.isArray(f.peaks)||f.peaks.length>5||!f.peaks.every(p=>Array.isArray(p)&&p.length===2&&Number.isInteger(p[0])&&p[0]>=24&&p[0]<=96&&Number.isFinite(p[1])&&p[1]>=0&&p[1]<=1))throw Error('Invalid spectral frame');return {...(Number.isInteger(f.note)&&f.note>=24&&f.note<=96&&Number.isFinite(f.confidence)?{note:f.note,confidence:Math.max(0,Math.min(1,f.confidence))}:{}),seconds:f.seconds,rms:f.rms,pitchClasses:f.pitchClasses,peaks:f.peaks};})};}
+ return {...(typeof x.musicalDirection==='string'?{musicalDirection:x.musicalDirection.slice(0,1500)}:{}),...(upcoming?{upcoming}:{}),...(x.tempoMode?{tempoMode:x.tempoMode==='auto'?'auto':'manual'}:{}),...(x.sessionId?{sessionId:x.sessionId}:{}),bpm:Math.round(x.bpm),history,...(x.continueThroughPause===true?{continueThroughPause:true}:{}),...(x.instruments!==undefined?{instruments:selectedInstruments(x.instruments)}:{}),...(evidence?{evidence}:{}),...(x.audio?{audio:x.audio}:{}),
  ...(Number.isInteger(x.phraseIndex)&&x.phraseIndex>=0?{phraseIndex:x.phraseIndex}:{}),
  ...(Array.isArray(x.attacks)?{attacks:x.attacks.filter(t=>Number.isFinite(t)&&t>=0&&t<=5).slice(-40)}:{}),
  ...(Array.isArray(x.attackBeats)?{attackBeats:x.attackBeats.filter(t=>Number.isFinite(t)&&t>=0&&t<=20).slice(-40)}:{}),
@@ -112,7 +100,6 @@ export function selectedInstruments(value){
  if(!Array.isArray(value)||!value.length||value.length>10||value.some(n=>!Object.values(instruments).includes(n)))throw Error('Choose at least one valid instrument');
  return [...new Set(value)];
 }
-export function allowedNotes(text,allowed){return extractNotes(text).filter(n=>allowed.includes(n.instrument));}
 // Circular phase estimate: only lock when repeated attacks agree on a pulse.
 export function pulseAlignment(onsets,bpm,now){
  const period=60/bpm,recent=onsets.filter(t=>t>=now-5&&t<=now);if(recent.length<6)return null;
@@ -126,3 +113,7 @@ export function alignBoundary(boundary,pulse,now){
  const nearest=pulse.phase+Math.round((boundary-pulse.phase)/pulse.period)*pulse.period;
  return nearest>=now+.12?nearest:nearest+pulse.period;
 }
+
+export function nextBarAnchor(now,queuedEnd){return Math.max(now+.15,queuedEnd);}
+
+export function canContinue(silent,continuous,frames,previous){return (!silent&&frames>0)||(continuous&&previous>0);}

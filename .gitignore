@@ -3,3 +3,6 @@ node_modules/
 evaluation/results/
 evaluation/samples/*.wav
 evaluation/samples/*.ogg
+
+.env.local
+server-*.log
