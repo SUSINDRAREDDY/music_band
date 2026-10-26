@@ -1,8 +1,9 @@
-diagnostics/
 node_modules/
-evaluation/results/
-evaluation/samples/*.wav
-evaluation/samples/*.ogg
-
-.env.local
-server-*.log
+diagnostics/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+playwright-report/
+test-results/

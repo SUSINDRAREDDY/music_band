@@ -1,12 +1,299 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111312"><link rel="icon" href="data:,"><title>Find the Beat — Studio</title><link rel="stylesheet" href="/style.css"></head><body>
-<header><a class="brand" href="/" aria-label="Find the Beat home"><span class="brand-mark">f<span>ı</span>b.</span><span>find the beat<small>THE LISTENING STUDIO</small></span></a><div class="header-center"><span class="live-led"></span> STUDIO 01 <span class="header-slash">/</span> LIVE ROOM</div><div class="connection"><i id="connection"></i><span id="model">Connecting</span><button id="fullscreen" class="icon-button" aria-label="Toggle full screen" title="Full screen">⛶</button></div></header>
-<main><section class="studio" aria-label="Interactive band stage"><div id="stage" aria-label="3D musicians on a recording stage"></div><div class="stage-heading"><span class="eyebrow">YOUR SESSION</span><h1>Live room</h1></div><div class="stage-tools"><button id="view" class="icon-button" title="Change camera view" aria-label="Change camera view">◉</button><label class="motion-control" title="Reduce animation"><input type="checkbox" id="reduceMotion"><span>Less motion</span></label></div><div class="stage-bottom"><span><span class="tiny-cross">+</span> DRAG TO LOOK AROUND <span class="separator">·</span> SCROLL TO ZOOM</span><button id="resetView">↺ <span>Reset view</span></button></div><div id="stageError" role="status"></div></section>
-<section class="console" aria-label="Session controls"><div class="band-heading"><div><span class="eyebrow">THE BAND</span><span id="bandCount">4 players</span></div><span class="band-hint">Select a player to join the stage</span><label class="continue-control"><input id="continuous" type="checkbox" checked> Keep playing through pauses</label></div><div id="channels"><div class="channel" data-name="pluck"><label class="instrument-toggle"><input type="checkbox" id="enable-pluck" aria-label="Enable Guitar"><span class="channel-icon"><svg viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M8 15c-5 2-4 8 0 8 4 0 5-4 3-6l9-10-2-2-9 10Z M9 18h.01 M17 7l3 3"/></svg></span><span class="channel-name">Guitar</span><span class="channel-check">+</span></label><div class="channel-level"><input id="pluck" aria-label="Guitar volume" type="range" min="0" max="100" value="50"><div class="activity" id="pluckActivity"></div></div></div><div class="channel" data-name="bass"><label class="instrument-toggle"><input type="checkbox" id="enable-bass" aria-label="Enable Bass"><span class="channel-icon"><svg viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M8 15c-4 0-5 6-1 8 4 1 7-3 5-6L21 4l-3-2-8 13Z M8 19h.01"/></svg></span><span class="channel-name">Bass</span><span class="channel-check">+</span></label><div class="channel-level"><input id="bass" aria-label="Bass volume" type="range" min="0" max="100" value="80"><div class="activity" id="bassActivity"></div></div></div><div class="channel" data-name="drums"><label class="instrument-toggle"><input type="checkbox" id="enable-drums" aria-label="Enable Drums"><span class="channel-icon"><svg viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12v8c0 3 14 3 14 0v-8 M5 12c0-4 14-4 14 0s-14 4-14 0 M5 3l14 6 M19 3 5 9 M9 15v7 M15 15v7"/></svg></span><span class="channel-name">Drums</span><span class="channel-check">+</span></label><div class="channel-level"><input id="drums" aria-label="Drums volume" type="range" min="0" max="100" value="50"><div class="activity" id="drumsActivity"></div></div></div><div class="channel" data-name="keys"><label class="instrument-toggle"><input type="checkbox" id="enable-keys" aria-label="Enable Rhodes"><span class="channel-icon"><svg viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v14H3Z M7 7v14 M12 7v14 M17 7v14 M6 7v7h3V7 M11 7v7h3V7 M16 7v7h3V7"/></svg></span><span class="channel-name">Rhodes</span><span class="channel-check">+</span></label><div class="channel-level"><input id="keys" aria-label="Rhodes volume" type="range" min="0" max="100" value="50"><div class="activity" id="keysActivity"></div></div></div><div class="channel" data-name="piano"><label class="instrument-toggle"><input type="checkbox" id="enable-piano" aria-label="Enable Piano"><span class="channel-icon"><svg viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h18v4H3Z M5 17V8l14-5 2 14 M7 17v4 M11 17v4 M15 17v4 M19 17v4"/></svg></span><span class="channel-name">Piano</span><span class="channel-check">+</span></label><div class="channel-level"><input id="piano" aria-label="Piano volume" type="range" min="0" max="100" value="50"><div class="activity" id="pianoActivity"></div></div></div><div class="channel" data-name="strings"><label class="instrument-toggle"><input type="checkbox" id="enable-strings" aria-label="Enable Strings"><span class="channel-icon"><svg viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10c-5-2-7 3-3 5-3 5 2 9 5 4 5 2 8-4 3-6 2-5-3-6-5-3Z M11 18 16 3 M19 4 7 22"/></svg></span><span class="channel-name">Strings</span><span class="channel-check">+</span></label><div class="channel-level"><input id="strings" aria-label="Strings volume" type="range" min="0" max="100" value="50"><div class="activity" id="stringsActivity"></div></div></div><div class="channel" data-name="organ"><label class="instrument-toggle"><input type="checkbox" id="enable-organ" aria-label="Enable Organ"><span class="channel-icon"><svg viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16h18v6H3Z M5 16V6h3v10 M11 16V2h3v14 M17 16V6h3v10 M7 19v3 M12 19v3 M17 19v3"/></svg></span><span class="channel-name">Organ</span><span class="channel-check">+</span></label><div class="channel-level"><input id="organ" aria-label="Organ volume" type="range" min="0" max="100" value="50"><div class="activity" id="organActivity"></div></div></div><div class="channel" data-name="vibes"><label class="instrument-toggle"><input type="checkbox" id="enable-vibes" aria-label="Enable Vibes"><span class="channel-icon"><svg viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h18 M4 8v12 M20 8v12 M7 7v9 M11 6v10 M15 5v11 M19 4v12 M6 3l12 15"/></svg></span><span class="channel-name">Vibes</span><span class="channel-check">+</span></label><div class="channel-level"><input id="vibes" aria-label="Vibes volume" type="range" min="0" max="100" value="50"><div class="activity" id="vibesActivity"></div></div></div><div class="channel" data-name="flute"><label class="instrument-toggle"><input type="checkbox" id="enable-flute" aria-label="Enable Flute"><span class="channel-icon"><svg viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19 19 3l3 3L6 22Z M8 15l2 2 M11 12l2 2 M14 9l2 2 M17 6l2 2"/></svg></span><span class="channel-name">Flute</span><span class="channel-check">+</span></label><div class="channel-level"><input id="flute" aria-label="Flute volume" type="range" min="0" max="100" value="50"><div class="activity" id="fluteActivity"></div></div></div><div class="channel" data-name="lead"><label class="instrument-toggle"><input type="checkbox" id="enable-lead" aria-label="Enable Synth"><span class="channel-icon"><svg viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14h4l3-9 5 15 3-9h5"/></svg></span><span class="channel-name">Synth</span><span class="channel-check">+</span></label><div class="channel-level"><input id="lead" aria-label="Synth volume" type="range" min="0" max="100" value="50"><div class="activity" id="leadActivity"></div></div></div></div>
-<div class="audio-desk"><div class="transport"><div class="transport-heading"><span class="eyebrow">INPUT SOURCE</span><span id="elapsed">00:00</span></div><div class="source-line"><select id="source" aria-label="Audio source"><option value="mic">Microphone / interface</option><option value="tab">Browser tab audio</option><option value="file">Audio recording</option></select><button id="chooseFile" aria-label="Choose audio recording" title="Choose recording">↥</button></div><div class="transport-buttons"><button id="start"><span>▶</span> Listen &amp; play</button><button id="stop" disabled aria-label="Stop session" title="Stop">■</button><button id="soundcheck" title="Audition selected band" aria-label="Audition selected band">♪</button></div><input id="file" type="file" accept="audio/*" hidden><audio id="recording" hidden></audio></div>
-<div class="signal"><div class="signal-heading"><span class="eyebrow">INPUT WAVEFORM</span><span><i id="liveDot"></i><b id="status" role="status">Ready to listen</b></span></div><canvas id="scope" aria-label="Live input waveform"></canvas><div class="signal-footer"><span id="inputLevel">INPUT — dB</span><span id="hint">Use headphones for a clean input.</span></div></div>
-<div class="pitch-panel"><div class="eyebrow">DETECTED PITCH</div><div class="pitch-main"><strong id="chord">—</strong><span id="frequency">— Hz</span></div><div class="tuning-track"><span>−50</span><div><i id="tuningNeedle"></i></div><span>+50</span></div><small id="confidence">Play a single clear note</small></div>
-<div class="tempo-panel"><div class="eyebrow">TEMPO</div><div class="tempo-main"><strong id="tempo">—</strong><span>BPM</span></div><label class="tempo-edit"><input id="manualTempo" aria-label="Tempo override in BPM" type="number" min="45" max="200" placeholder="Auto"><span>↗</span></label><small id="tempoSource">Follow input</small></div></div>
-<div class="console-footer"><span><span class="footer-dot"></span> <span id="audioHealth">Audio ready</span></span><span id="queue">No notes queued</span><span id="sampleRate">STEREO / LIVE</span></div></section></main>
-<div hidden aria-hidden="true"><span id="latency"></span><textarea id="musicalDirection"></textarea><pre id="modelInstructions"></pre><div id="modelTrace"></div><div id="log"></div><button id="export"></button><pre id="score"></pre><div id="notation"></div><span id="scoreStatus"></span></div>
-<script src="/abcjs.js"></script><script type="module" src="/boot.mjs"></script></body></html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#faf7ef" />
+    <title>Paper Doodle Sessions</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="paper-stage">
+      <div id="stage" aria-label="Your doodle band"></div>
+      <p id="stageError" role="alert"></p>
+    </main>
+    <div class="signature" aria-hidden="true">paper sessions<span>♪</span></div>
+    <div class="control-area">
+      <p class="session-status">
+        <i id="liveDot"></i
+        ><span id="status" role="status"
+          >Pick your band. Make a little music.</span
+        >
+      </p>
+      <button id="retryComposer" class="preview-button" hidden>
+        Retry composer
+      </button>
+      <button id="enableAudio" class="preview-button" hidden>
+        Enable audio
+      </button>
+      <div class="dock" aria-label="Session controls">
+        <details id="instrumentMenu" class="popover">
+          <summary>
+            <span>Instruments</span><span id="bandCount">4 players</span
+            ><span class="chevron">⌃</span>
+          </summary>
+          <div class="menu instrument-menu">
+            <div class="menu-heading">Your little band <span>volume</span></div>
+            <div class="channel">
+              <label
+                ><input type="checkbox" id="enable-pluck" /><span>Guitar</span
+                ><i id="pluckActivity" class="activity"></i></label
+              ><input
+                id="pluck"
+                type="range"
+                min="0"
+                max="100"
+                value="50"
+                aria-label="Guitar volume"
+              />
+            </div>
+            <div class="channel">
+              <label
+                ><input type="checkbox" id="enable-bass" /><span>Bass</span
+                ><i id="bassActivity" class="activity"></i></label
+              ><input
+                id="bass"
+                type="range"
+                min="0"
+                max="100"
+                value="80"
+                aria-label="Bass volume"
+              />
+            </div>
+            <div class="channel">
+              <label
+                ><input type="checkbox" id="enable-drums" /><span>Drums</span
+                ><i id="drumsActivity" class="activity"></i></label
+              ><input
+                id="drums"
+                type="range"
+                min="0"
+                max="100"
+                value="50"
+                aria-label="Drums volume"
+              />
+            </div>
+            <div class="channel">
+              <label
+                ><input type="checkbox" id="enable-keys" /><span>Keys</span
+                ><i id="keysActivity" class="activity"></i></label
+              ><input
+                id="keys"
+                type="range"
+                min="0"
+                max="100"
+                value="50"
+                aria-label="Keys volume"
+              />
+            </div>
+            <div class="channel">
+              <label
+                ><input type="checkbox" id="enable-piano" /><span>Piano</span
+                ><i id="pianoActivity" class="activity"></i></label
+              ><input
+                id="piano"
+                type="range"
+                min="0"
+                max="100"
+                value="50"
+                aria-label="Piano volume"
+              />
+            </div>
+            <div class="channel">
+              <label
+                ><input type="checkbox" id="enable-strings" /><span
+                  >Strings</span
+                ><i id="stringsActivity" class="activity"></i></label
+              ><input
+                id="strings"
+                type="range"
+                min="0"
+                max="100"
+                value="50"
+                aria-label="Strings volume"
+              />
+            </div>
+            <div class="channel">
+              <label
+                ><input type="checkbox" id="enable-organ" /><span>Organ</span
+                ><i id="organActivity" class="activity"></i></label
+              ><input
+                id="organ"
+                type="range"
+                min="0"
+                max="100"
+                value="50"
+                aria-label="Organ volume"
+              />
+            </div>
+            <div class="channel">
+              <label
+                ><input type="checkbox" id="enable-vibes" /><span>Vibes</span
+                ><i id="vibesActivity" class="activity"></i></label
+              ><input
+                id="vibes"
+                type="range"
+                min="0"
+                max="100"
+                value="50"
+                aria-label="Vibes volume"
+              />
+            </div>
+            <div class="channel">
+              <label
+                ><input type="checkbox" id="enable-flute" /><span>Flute</span
+                ><i id="fluteActivity" class="activity"></i></label
+              ><input
+                id="flute"
+                type="range"
+                min="0"
+                max="100"
+                value="50"
+                aria-label="Flute volume"
+              />
+            </div>
+            <div class="channel">
+              <label
+                ><input type="checkbox" id="enable-lead" /><span>Synth</span
+                ><i id="leadActivity" class="activity"></i></label
+              ><input
+                id="lead"
+                type="range"
+                min="0"
+                max="100"
+                value="50"
+                aria-label="Synth volume"
+              />
+            </div>
+            <button id="previewAnimations" class="preview-button">
+              <span aria-hidden="true">✧</span> Preview animations
+            </button>
+          </div>
+        </details>
+        <button
+          id="start"
+          class="play-button"
+          aria-label="Start session"
+          aria-pressed="false"
+        >
+          <span aria-hidden="true">▶</span> Start
+        </button>
+        <details id="settingsMenu" class="popover settings">
+          <summary aria-label="Session settings" title="Session settings">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h16M4 17h16M8 4v6M16 14v6" />
+            </svg>
+          </summary>
+          <div class="menu settings-menu">
+            <label
+              >Band volume
+              <input
+                id="bandVolume"
+                type="range"
+                min="0"
+                max="150"
+                value="100"
+                aria-label="Band volume"
+              /><output id="bandVolumeValue">100%</output></label
+            ><label
+              >Audio source<select id="source">
+                <option value="mic">Microphone</option>
+                <option value="tab">Browser tab</option>
+                <option value="file">Audio recording</option>
+                <option value="demo">Preview band</option>
+              </select></label
+            ><button id="chooseFile" class="file-button">
+              Choose recording ↥</button
+            ><label
+              >Tempo
+              <input
+                id="manualTempo"
+                type="number"
+                min="45"
+                max="200"
+                placeholder="Auto"
+                aria-label="Tempo override in BPM" /></label
+            ><label class="check-label"
+              ><input id="continuous" type="checkbox" checked /> Keep playing
+              through pauses</label
+            ><label class="check-label"
+              ><input id="reduceMotion" type="checkbox" /> Gentle motion</label
+            ><label
+              >Musical style<select id="musicalStyle">
+                <option value="auto">Follow my playing</option>
+                <option value="warm">Warm &amp; melodic</option>
+                <option value="groove">Playful groove</option>
+                <option value="cinematic">Cinematic</option>
+                <option value="jazz">Relaxed jazz</option>
+                <option value="minimal">Minimal &amp; spacious</option>
+                <option value="custom">Custom</option>
+              </select></label
+            >
+            <p>
+              Guides the selected instruments. Changes shape upcoming music;
+              already queued notes finish playing.
+            </p>
+            <label style="display: block"
+              >Musical direction<textarea
+                id="musicalDirection"
+                rows="3"
+                placeholder="Describe the melody, mood or feel you want"
+                style="display: block; width: 100%; margin-top: 8px"
+              ></textarea>
+            </label>
+            <details>
+              <summary>Audio status</summary>
+              <pre
+                id="playbackDetails"
+                style="font-size: 10px; white-space: pre-wrap"
+              >
+Start a session to see playback details.</pre
+              >
+            </details>
+            <p id="hint">Use headphones for a clean input.</p>
+            <a
+              href="https://kenney.nl/assets/scribble-platformer"
+              target="_blank"
+              rel="noreferrer"
+              >Character bodies by Kenney · CC0</a
+            >
+          </div>
+        </details>
+        <button
+          id="fullscreen"
+          class="icon-button"
+          title="Full screen"
+          aria-label="Full screen"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 4H4v4m12-4h4v4M4 16v4h4m12-4v4h-4" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div hidden aria-hidden="true">
+      <button id="stop" disabled></button><button id="soundcheck"></button
+      ><button id="view"></button><button id="resetView"></button
+      ><input id="file" type="file" accept="audio/*" /><audio
+        id="recording"
+      ></audio
+      ><canvas id="scope"></canvas><span id="elapsed"></span
+      ><span id="model"></span><i id="connection"></i
+      ><span id="inputLevel"></span><span id="chord"></span
+      ><span id="frequency"></span><span id="confidence"></span
+      ><i id="tuningNeedle"></i><span id="tempo"></span
+      ><span id="tempoSource"></span><span id="audioHealth"></span
+      ><span id="queue"></span><span id="sampleRate"></span
+      ><span id="latency"></span>
+      <pre id="modelInstructions"></pre>
+      <div id="modelTrace"></div>
+      <div id="log"></div>
+      <button id="export"></button>
+      <pre id="score"></pre>
+      <div id="notation"></div>
+      <span id="scoreStatus"></span>
+    </div>
+    <script src="/abcjs.js"></script>
+    <script type="module" src="/boot.mjs"></script>
+  </body>
+</html>

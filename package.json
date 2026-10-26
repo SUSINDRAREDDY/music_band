@@ -1,1 +1,26 @@
-{"name":"find-the-beat","private":true,"type":"module","scripts":{"start":"node server.mjs","test":"node --test tests/*.test.mjs"},"dependencies":{"abcjs":"^6.7.1","three":"^0.186.1"}}
+{
+  "name": "find-the-beat",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node scripts/check.mjs",
+    "test:browser": "node tests/browser/audio-check.mjs && node tests/browser/error-check.mjs",
+    "test:live": "node tests/browser/check.mjs",
+    "test:levels": "node tests/browser/level-check.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "abcjs": "^6.7.1"
+  },
+  "description": "A live AI accompaniment band with an animated paper stage.",
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.1",
+    "prettier": "^3.6.2"
+  }
+}

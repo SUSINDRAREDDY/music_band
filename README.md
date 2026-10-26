@@ -1,122 +1,124 @@
 # Find the Beat
 
+![Animated paper band](docs/images/app.png)
 
+An experimental AI band that writes accompaniment for your music. Play an instrument, share browser audio, or choose a recording. An animated paper band performs the generated parts while the app displays their notation.
 
-Live accompaniment composed as ABC notation, with sheet music rendered while the model writes.
+The composer receives measured pitch and rhythm information and writes ABC notation. The browser turns that notation into sampled instrument audio. This is a local Node.js app; it does not need a build step.
 
+## Quick start
 
+You need **Node.js 22 or newer**, npm, and a browser with Web Audio support. Chrome is recommended for sharing tab audio.
 
-## Run
+```sh
+npm ci
+cp .env.example .env.local
+```
 
+Edit `.env.local` and set `OPENROUTER_API_KEY` to a regular OpenRouter inference key. Management keys cannot generate music. The example selects `google/gemini-3.8-flash`; model access and API credits are required.
 
+```sh
+npm start
+```
 
-`npm install`, then `npm start`. Open http://localhost:4318. Requires Node 20+ and a signed-in Codex CLI. Set CODEX_PATH if needed. Generation uses GPT-6.1 Sol with low reasoning and your Codex account allowance.
+Open **http://localhost:4318**. Keep the server running while you use the app. API requests may incur charges on your provider account.
 
+## Play with the band
 
+1. Open **Instruments** and select the band members you want. Start with one or two so their parts are easy to hear.
+2. Open settings and choose **Microphone**, **Browser tab**, or **Audio recording**.
+3. Pick a musical style, or write your own direction. Leave tempo on Auto, or enter a tempo between 45 and 200 BPM.
+4. Press **Start**. Microphone and tab sessions listen for about five seconds before requesting accompaniment. For tab audio, enable **Share tab audio** in the browser's sharing dialog.
+5. Press the same transport button to stop. Start a new session after changing providers or updating the composition prompt.
 
-Select instruments and an input (microphone, shared tab audio, or recording), then Start listening. Use headphones. Test speaker checks output independently. Stop cancels generation and playback.
+Use headphones for the band output so it does not feed back into the microphone. If you play a song from your phone, place its speaker near the computer microphone and select Microphone. A clear solo instrument is easier to analyze than a full mix.
 
+**Audio recording** prepares accompaniment before playing the source continuously. Preparation takes longer, but the source and band share one audio clock. **Preview band** auditions the selected sampled instruments without composing from your input. **Preview animations** only shows the characters moving.
 
+Styles guide the arrangement; they do not change an instrument's sample patch. Guitar uses a nylon acoustic sound, Keys uses electric piano, and each of the ten instruments has a fixed soundfont patch.
 
-## Current pipeline
+## Configuration
 
+Keep local settings in `.env.local`, which is ignored by Git. See [`.env.example`](.env.example).
 
+- `MUSIC_PROVIDER`: `openrouter` or `codex`. If omitted, the server uses Codex.
+- `OPENROUTER_API_KEY`: server-side inference key for OpenRouter.
+- `OPENROUTER_MODEL`: OpenRouter model ID; defaults to `google/gemini-3.8-flash`.
+- `BEAT_PORT`: local port; defaults to `4318`.
+- `BEAT_DIAGNOSTICS=1`: additionally saves captured WAV windows and detailed scheduling diagnostics. Off by default.
+- `CODEX_PATH`: optional executable path when using the Codex provider.
+- `BEAT_TEST=1`: enables the developer recording harness at `/one-minute-test` and its restricted artifact writer.
 
-A rolling five-second input window supplies measured spectral and onset evidence to the composer. The model cannot hear audio directly. Original WAV windows remain in local diagnostics; only compact measured evidence is sent to the model.
+To use the alternative Codex provider, install and sign into the Codex CLI, then set `MUSIC_PROVIDER=codex`. That provider uses the configured `gpt-6.1-sol` model through the signed-in app-server. There is no automatic fallback between providers.
 
+The server binds to `127.0.0.1` and accepts local browser origins. It is intended for local use, not a public hosted service.
 
+## How it works
 
-Each Start-to-Stop listening flow prewarms one ephemeral Codex thread, using GPT-6.1 Sol, low reasoning and the requested Fast tier. Every phrase is a new turn on that same thread. Stop interrupts generation and releases the thread; a new Start creates a fresh thread. Instrument changes remain in the same thread and the latest selection overrides previous turns. Authentication recovery may require replacing a disconnected thread.
+- **Capture and analysis:** an AudioWorklet captures input. A worker extracts pitch-class energy, spectral peaks, onsets, and approximate monophonic note events.
+- **Composition:** the server passes all measured frames and events to the selected model. Confidence fields are removed from composer-facing input. Instructions ask the parts to follow the source's melody, harmony, accents, and phrase changes.
+- **Streaming:** the model emits ABC sections, which are parsed into playable notes and streamed to the browser. No canned accompaniment fills model stalls. The app does not add musical variation by rewriting generated notes after composition; notation parsing and playback bounds still apply.
+- **Playback:** Web Audio schedules sampled instruments. Live entries can align to a detected pulse; recording mode prepares the full accompaniment and source on a shared timeline.
+- **Continuity:** each listening session retains musical context until Stop. OpenRouter cannot accept new observations inside an active HTTP request, so observations captured during generation are included in the next request. Codex supports steering its active turn.
 
-Each response has one ABC header (X:1, M:4/4, L:1/8, Q:1/4=BPM, K:key), then four one-bar ensemble blocks ending in `%endbar`. The server restores the shared header for each block, validates exact durations, assigns instrument programs and streams playable bars through NDJSON. No music scoring is performed. The prompt includes valid rhythm, chord, rest and accidental examples and excludes unsupported notation.
+Instrument samples load from the FluidR3_GM soundfont hosted at `paulrosen.github.io`. Network access is needed for samples and the selected model provider.
 
-The browser preloads selected instrument samples and appends each validated bar to the audio queue as it arrives. No fallback loops are generated; sustained generation slower than playback can still cause gaps. Samples load from the FluidR3_GM soundfont hosted by paulrosen.github.io.
+## Project layout
 
-## Xiaomi research
+```text
+server.mjs                 Local HTTP entry point, routes, provider selection
+src/server/
+  abc.mjs                  ABC parsing and streamed-section validation
+  context.mjs              Composer input construction
+  input-score.mjs          Measured-note notation and confidence removal
+  music-prompt.mjs          Shared composition instructions
+  openrouter.mjs           OpenRouter streaming provider and session history
+  composer.mjs             Alternative Codex app-server provider
+  sse.mjs                  Streaming event decoder
+  diagnostics.mjs          Optional captured-audio diagnostics
+  session-archive.mjs      Local append-only session archives
+public/                    Browser UI, analysis workers, audio, and notation
+public/vendor/paper-doodle/ Animated character rendering and reactions
+public/assets/             Active character geometry and attribution
+tests/                     Unit and provider-contract tests
+tests/browser/             Browser audio checks and recording harness
+scripts/check.mjs          Syntax and local-import checks
+docs/                      Developer testing and asset credits
+diagnostics/               Generated local data; ignored by Git
+```
 
+## Development
 
+```sh
+npm run check
+npm run format:check
+npm test
+```
 
-The [MiMo-V2.6-RL-oss dataset](https://huggingface.co/datasets/XiaomiMiMo/MiMo-V2.6-RL-oss) contains a music subset of composition briefs and metadata, not paired reference ABC answers. Rows contain prompt, data_source, ability, reward_model, and extra_info (including requested voice count, BPM, and meter). The first inspected brief requests 56 bars in E major at 129 BPM for violin, flute, and cello.
+Use `npm run format` to format source, tests, and documentation. CI runs the same static checks and unit tests without an API key. Browser checks cover audio output, errors, and UI behavior; see [testing instructions](docs/testing.md).
 
+## Diagnostics and privacy
 
+API keys stay on the Node server. Original input audio is not sent to the composition model; measured musical evidence is sent instead.
 
-The [dataset builder](https://github.com/XiaomiMiMo/verl/blob/mimo-oss/recipes/design/music/build_parquet.py) explicitly leaves ground truth empty. The [scorer pipeline](https://github.com/XiaomiMiMo/verl/blob/mimo-oss/recipes/design/music/scorer/pipeline.py) extracts ABC, compiles it using abc2midi, rejects compiler errors, ten or more bar warnings, internal blank lines, and conflicting channel programs, then scores MIDI features against a reference baseline. It does not evaluate brief compliance.
+Every session writes an append-only archive under `diagnostics/sessions/`. Archives include model inputs, generated notation, timing, errors, and playback reports. Raw input WAV files are saved only when `BEAT_DIAGNOSTICS=1`. All diagnostics are local and ignored by Git, but may contain details of your performance or recording.
 
+Useful local endpoints are `/health`, `/composer-status`, `/playback-status`, `/sessions`, and `/sessions/<session-id>`. The settings menu also exposes Audio status. Deleting `diagnostics/` removes saved local sessions; stop the server first.
 
+## Troubleshooting
 
-This app adopts ABC output and the no-blank-lines rule. Its live four-bar format and abcjs validation are application constraints; it does not run Xiaomi's RL scorer or claim equivalent validation or music quality.
+- **401 from OpenRouter:** check that the key is a regular inference key and is active. A management key can pass account lookups while generation fails.
+- **402 from OpenRouter:** check available credits and key spending limits.
+- **No sound:** click Enable audio if shown, check band and instrument volumes, and inspect Audio status. Sample loading needs network access.
+- **No tab input:** select a browser tab and enable audio sharing; support depends on the browser and operating system.
+- **Another session is active:** stop the other tab's session, or restart the server.
+- **Recording tempo is unclear:** enter a manual tempo and restart.
+- **Repetitive or mismatched music:** try a clear solo source and a smaller band. Check the captured input and generated notation before assuming the renderer is at fault.
 
+## Current limits
 
+This is a prototype, not a reliable transcription system or a replacement for a live musician. Analysis works best on clear single-note input. Full mixes, polyphonic guitar, rubato, and noisy microphone audio are harder. The transport uses 4/4; pulse alignment is not reliable downbeat detection. Live generation can lag musical changes, and model or sample-loading delays can create gaps. Fixed soundfont samples also limit articulation and sustained notes.
 
-## Validation and diagnostics
+Passing tests establishes specific software behavior, not musical quality. Generated accompaniment still needs listening evaluation with the source.
 
-
-
-`npm test` checks ABC parsing, streaming preview boundaries, authentication recovery, evidence extraction, tempo handling, and diagnostics. Input estimates are experimental, especially on polyphonic or ambiguous material.
-
-
-
-Each request is saved under diagnostics/<request-id>/ with input.wav, request.json and events.ndjson. These local files persist until manually deleted. Evaluation scripts and source attribution remain in evaluation/; historical trial claims are not current validation.
-
-
-
-## Continuous bar playback
-
-
-
-The composer now emits four standalone one-bar ABC tunes per request. Each tune contains the complete ensemble for that bar and ends with `%endbar`. The server validates each voice's duration and emits a `bar` event as soon as its delimiter arrives. This is notation validation only, not music scoring. All-rest bars retain their four-beat duration. Cross-bar ties are excluded from this transport.
-
-
-
-The browser prepares samples and appends bars at the queued audio end. Selected instrument samples (MIDI 36–84, plus common drum hits) preload with six background requests at a time during listening; other notes load on demand. First generation starts after two seconds of input. Subsequent requests begin when queued duration falls below the measured previous request time plus four seconds. Bar diagnostics record sample wait, request-to-schedule time, anchor, and underrun gap. Network or model stalls can still cause gaps. Earlier full-response playback descriptions above are superseded by this section.
-
-
-
-## Google AI Studio provider
-
-
-
-The server loads gitignored `.env.local` (Node 20.12+). Set MUSIC_PROVIDER=gemini and GEMINI_API_KEY to an AI Studio key. Keys stay on the Node server and are sent only in the x-goog-api-key header to Google's generativelanguage.googleapis.com endpoint. The browser never receives the key. Remove MUSIC_PROVIDER or set it to codex to restore the previous provider; there is no automatic cross-provider fallback.
-
-
-
-Direct Google model ID: gemini-3.1-flash-lite-preview (OpenRouter labels the same model google/gemini-3.1-flash-lite-preview but requires a different key). Uses streamGenerateContent with SSE, minimal thinking, a concise instruction and shared ABC headers across four bar blocks. Preserves per-bar notation validation, cancellation, preloading and adaptive scheduling; adds first-token and first-bar timing. Raw audio is not sent to Google; compact measured musical context is.
-
-
-
-Documentation: https://ai.google.dev/gemini-api/docs/generate-content/gemini-3 and https://ai.google.dev/gemini-api/docs/openai .
-
-
-
-Live synthetic Em-context tests at 100 BPM for pluck/bass/drums, after clarifying the delimiter format: 3/3 complete valid responses; first playable bar 2.330 / 1.677 / 3.875 seconds; complete four bars 2.639 / 2.053 / 4.264 seconds (9.6 seconds of playback). Earlier prompt attempts failed formatting. These are small-sample API timings, not browser audio latency or music-quality scores. Real performance still depends on sample loading, network variance and musical validity.
-
-
-Session diagnostics include the reused thread ID and setup wait per request. Lifecycle tests cover reuse, Stop during setup, new sessions, and notation-error recovery within the same thread.
-
-## Simplified streaming flow
-
-Choose a session tempo (default 100 BPM) before Start. It stays fixed until Stop; queued notes are never automatically retimed. Only the worker spectral/onset evidence goes to GPT, without a competing browser chord estimate. GPT chooses the music; validated bars are played directly without fallback loops. Notation appends one bar at a time within each phrase.
-
-Recording diagnostics are off by default. Set `BEAT_DIAGNOSTICS=1` before starting the server to enable local WAV and event capture for debugging. Normal playback does not encode or upload WAV snapshots, or write request diagnostics. Older diagnostics are retained.
-
-Tempo is now automatic by default: GPT infers pace from measured onsets and recent spectral detail, writes it in ABC Q:1/4, and each streamed bar carries that tempo into playback. A manual BPM remains an optional session override. Previously queued bars keep their original timing. Selected instruments are an allowed palette, not mandatory voices. The four-bar transport still uses 4/4; arbitrary meters are not yet supported.
-
-## Recording lookahead
-
-Recording input is decoded locally and analysed before its matching source sections play. Each request describes the next four source sections with absolute recording timestamps, per-section onset/pitch evidence, provisional ABC dominant notes and chord confidence. YIN estimates periodic pitch for clear solo input; it does not separate voices in a full mix. Uncertain notes are marked as rests in the candidate ABC, and spectral/chord estimates remain explicitly uncertain.
-
-Each validated generated bar and its original audio section share one AudioContext start time. If the model is late, both wait together at the section boundary. This preserves their relative alignment but can interrupt recording playback. No prerecorded accompaniment or fallback patterns are substituted. At the end, playback stops; Stop cancels all scheduled source sections. Instrument selection changes stop recording mode so a new selection can start cleanly. If a pulse cannot be estimated, a manual tempo is required. Tempo and 4/4 section boundaries are estimates, not a full beat/downbeat transcription; rubato and dense mixes remain experimental.
-
-Tests cover isolated pitch detection, silence, lookahead context, shared audio anchors, late bars, end truncation and cancellation. Browser verification uses the original synthetic `evaluation/live-pace-test.wav`, not a claim of perceptually verified accompaniment quality.
-
-## Model-free note tracking
-
-Input analysis now tracks monophonic note events at 10 ms hops using YIN and energy attacks. Original samples are unchanged. Each event retains start/end seconds and confidence. ABC uses a 1/32-note grid, explicit accidentals, z for measured silence and x for unknown/unobserved spans. Raw event timing accompanies the ABC so rounding is visible, not hidden. No trained transcription model is used. This is intended for clear single-note input, not reliable chord/voice separation from full songs. Short ornaments, noisy attacks and legato boundaries remain approximate.
-
-## Continuous recording playback and phrase memory (current)
-
-Recording mode now prepares the full accompaniment before playback. It starts the original recording once, continuously, and schedules GPT notes against that same audio clock. This trades preparation time for uninterrupted playback; it does not eliminate live microphone inference latency. Notes and the original samples are not replaced with fallback patterns.
-
-Each session retains the last four delivered ABC bars, the first pitched motif and a delivered-bar position. The prompt asks for a related counter-melody, phrase development and an optional subset of allowed instruments. User musical direction is supplied separately on each turn. Recording-only `%hold instrument MIDI_PITCH` comments join explicitly continued boundary notes; ordinary repeated notes remain separate attacks. Sample length can still limit audible sustain.
-
-The reproducible browser test is `/one-minute-test` when the server starts with `BEAT_TEST=1`. Click Run test; it synthesizes an original 60-second solo input, runs six real GPT phrases in one session, prepares samples, plays the full source continuously and records the mix. The gated artifact endpoint writes only its three named test files into `evaluation/one-minute`. The trace includes exact model inputs, instructions, streamed ABC, parsed notes and errors. This controlled test supplies 96 BPM and starts on a downbeat; it does not establish robust downbeat detection or accuracy on polyphonic commercial recordings. No musical quality score is computed.
+Character bodies are adapted from Kenney's CC0 Scribble Platformer assets. See [asset credits](docs/credits.md) and the retained source license.
